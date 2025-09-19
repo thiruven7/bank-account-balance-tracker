@@ -1,4 +1,5 @@
 import './App.css';
+import BalanceTracker from './BalanceTracker'
 
 function App() {
   return (
@@ -6,6 +7,7 @@ function App() {
       <h1>
         Balance Tracker Application
       </h1>
+      <BalanceTracker/>
     </div>
   );
 }
