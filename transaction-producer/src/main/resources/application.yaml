@@ -7,7 +7,7 @@ spring:
 
 msa:
   balance-tracker-api:
-    url: http://localhost:8080
+    url: http://localhost:8091
     path: /api/bankaccount/v1/transactions
   producer:
     threadpoolcount: 2
