@@ -1,13 +1,10 @@
 package com.bankaccount.balancetracker.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,9 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.bankaccount.balancetracker.dto.Batch;
 import com.bankaccount.balancetracker.dto.Transaction;
-import com.bankaccount.balancetracker.service.helper.AuditSystemBatchBuilder;
+import com.bankaccount.balancetracker.service.AuditSubmissionService;
 
 /**
  * Test class to test BankAccountServiceImpl class
@@ -34,12 +30,11 @@ class BankAccountServiceImplTest {
 	private BankAccountServiceImpl bankAccountServiceImpl;
 
 	@Mock
-	private AuditSystemBatchBuilder batchBuilder;
+	private AuditSubmissionService auditSubmissionService;
 
 	@BeforeEach
 	void setup() {
 		ReflectionTestUtils.setField(bankAccountServiceImpl, "transactionLimit", 5);
-		ReflectionTestUtils.setField(bankAccountServiceImpl, "maxAmountPerBatch", new BigDecimal("500"));
 	}
 
 	/**
@@ -58,7 +53,7 @@ class BankAccountServiceImplTest {
 		// then
 		double balance = bankAccountServiceImpl.retrieveBalance();
 		assertEquals(250.52, balance, 0.001);
-		verify(batchBuilder, never()).buildBatches(anyList(), any());
+		verify(auditSubmissionService, never()).submit(anyList());
 
 	}
 
@@ -78,7 +73,7 @@ class BankAccountServiceImplTest {
 		// then
 		double balance = bankAccountServiceImpl.retrieveBalance();
 		assertEquals(-250.52, balance, 0.001);
-		verify(batchBuilder, never()).buildBatches(anyList(), any());
+		verify(auditSubmissionService, never()).submit(anyList());
 
 	}
 
@@ -94,15 +89,13 @@ class BankAccountServiceImplTest {
 				new Transaction("CRE124", new BigDecimal("250")), new Transaction("DEB125", new BigDecimal("-300")),
 				new Transaction("CRE126", new BigDecimal("200")), new Transaction("DEB127", new BigDecimal("-100.63")));
 
-		when(batchBuilder.buildBatches(anyList(), any())).thenReturn(List.of(new Batch(new BigDecimal("500"), 2),
-				new Batch(new BigDecimal("500"), 2), new Batch(new BigDecimal("100.63"), 1)));
 		// when
 		transactions.forEach(bankAccountServiceImpl::processTransaction);
 
 		// then
 		double balance = bankAccountServiceImpl.retrieveBalance();
 		assertEquals(299.37, balance, 0.001);
-		verify(batchBuilder, times(1)).buildBatches(anyList(), eq(new BigDecimal("500")));
+		verify(auditSubmissionService, times(1)).submit(transactions);
 
 	}
 

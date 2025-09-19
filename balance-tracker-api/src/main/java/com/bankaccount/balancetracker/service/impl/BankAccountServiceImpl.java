@@ -11,12 +11,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.bankaccount.balancetracker.dto.Batch;
-import com.bankaccount.balancetracker.dto.Submission;
 import com.bankaccount.balancetracker.dto.Transaction;
+import com.bankaccount.balancetracker.service.AuditSubmissionService;
 import com.bankaccount.balancetracker.service.BankAccountService;
 import com.bankaccount.balancetracker.service.helper.AuditSystemBatchBuilder;
-import com.bankaccount.balancetracker.service.util.JsonUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,13 +32,10 @@ public class BankAccountServiceImpl implements BankAccountService {
 	@Value("${msa.auditsystem.transaction.limit}")
 	private int transactionLimit;
 
-	@Value("${msa.auditsystem.transaction.maxAmountPerBatch}")
-	private BigDecimal maxAmountPerBatch;
+	private final AuditSubmissionService auditSubmissionService;
 
-	private final AuditSystemBatchBuilder batchBuilder;
-
-	public BankAccountServiceImpl(AuditSystemBatchBuilder batchBuilder) {
-		this.batchBuilder = batchBuilder;
+	public BankAccountServiceImpl(AuditSubmissionService auditSubmissionService) {
+		this.auditSubmissionService = auditSubmissionService;
 	}
 
 	/**
@@ -67,7 +62,7 @@ public class BankAccountServiceImpl implements BankAccountService {
 					}
 					// Submit to Audit System
 					if (!submissionTransList.isEmpty())
-						submitToAuditSystem(submissionTransList);
+						auditSubmissionService.submit(submissionTransList);
 				}
 			}
 
@@ -81,17 +76,6 @@ public class BankAccountServiceImpl implements BankAccountService {
 	@Override
 	public double retrieveBalance() {
 		return balance.get().doubleValue();
-	}
-
-	private void submitToAuditSystem(List<Transaction> transList) {
-		List<Batch> batches = batchBuilder.buildBatches(transList, maxAmountPerBatch);
-
-		Submission submission = new Submission();
-		submission.setBatches(batches);
-		log.info("Audit System Submission batch count = {}", submission.getBatches().size());
-
-		// Print Audit System Submission
-		log.info(JsonUtils.toJson(submission));
 	}
 
 }

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -26,7 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.bankaccount.balancetracker.dto.BalanceResponse;
 import com.bankaccount.balancetracker.dto.ErrorResponse;
 import com.bankaccount.balancetracker.dto.Transaction;
-import com.bankaccount.balancetracker.service.helper.AuditSystemBatchBuilder;
+import com.bankaccount.balancetracker.service.AuditSubmissionService;
 
 /**
  * Integration test for Balance Tracker API
@@ -41,7 +40,7 @@ class BalanceTrackerApi_IT {
 
 	@SuppressWarnings("removal") // TO-DO: Could be replaced with manual TestConfig to create Spy Bean
 	@SpyBean
-	private AuditSystemBatchBuilder batchBuilder;
+	private AuditSubmissionService auditSubmissionService;
 
 	/**
 	 * Verifies process transaction operation for a valid Transaction
@@ -133,7 +132,7 @@ class BalanceTrackerApi_IT {
 		// then
 		ResponseEntity<BalanceResponse> response = testRestTemplate.getForEntity("/api/bankaccount/v1/balance",
 				BalanceResponse.class);
-		verify(batchBuilder, times(1)).buildBatches(anyList(), eq(new BigDecimal("500")));
+		verify(auditSubmissionService, times(1)).submit(anyList());
 		assertNotNull(response);
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
