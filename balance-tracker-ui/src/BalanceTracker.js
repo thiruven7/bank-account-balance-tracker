@@ -20,11 +20,15 @@ function BalanceTracker() {
     }, []);
 
     return (
-        <div style={{ margin: '2rem' }}>
-            <h2>Bank Account Summary</h2>
-            <p><strong>Account ID:</strong>1234567890</p>
-            {error ? (<p style={{ color: 'red' }}>Error: {error}</p>)
-                : (<p><strong>Balance:</strong> £{balance}</p>)}
+        <div className="container mt-5">
+            <div className="card shadow-sm">
+                <div className="card-body">
+                    <h2 className="card-title text-primary">Bank Account Summary</h2>
+                    <p><strong>Account ID:</strong>1234567890</p>
+                    {error ? (<p className="text-danger">Error: {error}</p>)
+                        : (<p><strong>Balance:</strong> £{balance}</p>)}
+                </div>
+            </div>
         </div>
     )
 }
