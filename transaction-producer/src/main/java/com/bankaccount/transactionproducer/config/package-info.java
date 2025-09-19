@@ -1,0 +1,1 @@
+package com.bankaccount.transactionproducer.config;
