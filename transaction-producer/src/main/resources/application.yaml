@@ -1,0 +1,19 @@
+server:
+  port: 8092
+  
+spring:
+  application:
+    name: transaction-producer
+
+msa:
+  balance-tracker-api:
+    url: http://localhost:8080
+    path: /api/bankaccount/v1/transactions
+  producer:
+    threadpoolcount: 2
+    rate:
+      credits-per-sec: 25 # Number of credit transactions
+      debits-per-sec: 25 # Number of debit transactions
+    amount:
+      min: 200 # Min amount per transaction in £
+      max: 500000 # Max amount per transaction in £
