@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: balance-tracker-api
+
+msa:
+  auditsystem:
+    transaction:
+      limit: 5 # Max Transaction Limit to submit to the Audit System - for testing.
+      maxAmountPerBatch: 500 # Max absolute amount per batch in £ - for testing.

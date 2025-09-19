@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bankaccount.balancetracker.dto.BalanceResponse;
 import com.bankaccount.balancetracker.dto.Transaction;
 import com.bankaccount.balancetracker.service.BankAccountService;
 
@@ -59,8 +60,9 @@ public class BankAccountController {
 	@Operation(summary = "Retrieve Balance", description = "Retrieves account balance")
 	@ApiResponse(responseCode = "200", description = "Balance retrieved successfully")
 	@GetMapping("/balance")
-	public ResponseEntity<Double> getBalance() {
-		return ResponseEntity.ok(bankAccountService.retrieveBalance());
+	public ResponseEntity<BalanceResponse> getBalance() {
+		double balance = bankAccountService.retrieveBalance();
+		return ResponseEntity.ok(new BalanceResponse(balance));
 	}
 
 }
