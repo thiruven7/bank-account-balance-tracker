@@ -11,10 +11,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bankaccount.balancetracker.dto.BalanceResponse;
+import com.bankaccount.balancetracker.dto.ErrorResponse;
 import com.bankaccount.balancetracker.dto.Transaction;
 import com.bankaccount.balancetracker.service.BankAccountService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -44,10 +47,12 @@ public class BankAccountController {
 	 */
 	@Operation(summary = "Add Transaction", description = "Adds credit and debit transaction to the bank account")
 	@ApiResponse(responseCode = "201", description = "Transaction completed successfully")
+	@ApiResponse(responseCode = "400", description = "Invalid transaction input", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+	@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
 	@PostMapping("/transactions")
 	public ResponseEntity<Void> addTransaction(@Valid @RequestBody Transaction transaction) {
-		log.info("Received transaction : Id = {}, amount = {}, timestamp = {}", transaction.getTransactionId(),
-				transaction.getAmount(), LocalDateTime.now());
+		log.info("Received Transaction : transaction Id = {}, amount = {}, timestamp = {}",
+				transaction.getTransactionId(), transaction.getAmount(), LocalDateTime.now());
 		bankAccountService.processTransaction(transaction);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
@@ -58,9 +63,11 @@ public class BankAccountController {
 	 * @return 200 Ok
 	 */
 	@Operation(summary = "Retrieve Balance", description = "Retrieves account balance")
-	@ApiResponse(responseCode = "200", description = "Balance retrieved successfully")
+	@ApiResponse(responseCode = "200", description = "Balance retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = BalanceResponse.class)))
+	@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
 	@GetMapping("/balance")
 	public ResponseEntity<BalanceResponse> getBalance() {
+		log.info("Retrive Balance : entry");
 		double balance = bankAccountService.retrieveBalance();
 		return ResponseEntity.ok(new BalanceResponse(balance));
 	}

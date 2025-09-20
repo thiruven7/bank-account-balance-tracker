@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import com.bankaccount.balancetracker.dto.Transaction;
 import com.bankaccount.balancetracker.service.AuditSubmissionService;
 import com.bankaccount.balancetracker.service.BankAccountService;
-import com.bankaccount.balancetracker.service.helper.AuditSystemBatchBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,9 +42,11 @@ public class BankAccountServiceImpl implements BankAccountService {
 	 */
 	@Override
 	public void processTransaction(Transaction transaction) {
+		log.debug("processTransaction:enter with transaction Id: {}", transaction.getTransactionId());
 
 		// Update Balance
-		balance.updateAndGet(bal -> bal.add(transaction.getAmount()));
+		var updatedBalance = balance.updateAndGet(bal -> bal.add(transaction.getAmount()));
+		log.debug("Updated balance after transaction Id {}: {}", transaction.getTransactionId(), updatedBalance);
 
 		// Add transactions to the queue
 		transactionsQueue.add(transaction);
@@ -60,13 +61,16 @@ public class BankAccountServiceImpl implements BankAccountService {
 					for (int i = 0; i < transactionLimit; i++) {
 						Optional.ofNullable(transactionsQueue.poll()).ifPresent(submissionTransList::add);
 					}
-					// Submit to Audit System
-					if (!submissionTransList.isEmpty())
+					// Submit to Audit System with the transaction limit reached
+					if (!submissionTransList.isEmpty()) {
+						log.info("Transaction limit reached ({}). Triggering audit submission.", transactionLimit);
 						auditSubmissionService.submit(submissionTransList);
+					}
 				}
 			}
 
 		}
+		log.debug("processTransaction:exit");
 
 	}
 
@@ -75,6 +79,7 @@ public class BankAccountServiceImpl implements BankAccountService {
 	 */
 	@Override
 	public double retrieveBalance() {
+		log.debug("retrieveBalance:entry");
 		return balance.get().doubleValue();
 	}
 

@@ -21,7 +21,7 @@ import com.bankaccount.balancetracker.dto.Transaction;
 import com.bankaccount.balancetracker.service.AuditSubmissionService;
 
 /**
- * Test class to test BankAccountServiceImpl class
+ * Test class to test BankAccountService implementation
  */
 @ExtendWith(MockitoExtension.class)
 class BankAccountServiceImplTest {

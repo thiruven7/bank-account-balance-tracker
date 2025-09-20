@@ -10,3 +10,21 @@ msa:
     transaction:
       limit: 1000 # Max Transaction Limit to submit to the Audit System.
       maxAmountPerBatch: 1000000 # Max absolute amount per batch in £.
+  
+# Actuator Properties
+management:
+  server:
+    port: 9091
+  endpoints:
+    web:
+      exposure:
+        include: health, info, env
+  endpoint:
+    health:
+      show-details: always
+
+#Logger properties
+logging:
+  level:
+    root: INFO # Set to INFO for PROD env.
+    com.bankaccount.balancetracker: DEBUG # Set to INFO for PROD env.

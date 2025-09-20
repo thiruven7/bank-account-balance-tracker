@@ -42,14 +42,23 @@ public class AuditSubmissionServiceImpl implements AuditSubmissionService {
 
 	@Override
 	public void submit(List<Transaction> transactions) {
+		log.debug("submit:enter with {} transactions", transactions != null ? transactions.size() : "null");
+
+		if (transactions == null || transactions.isEmpty()) {
+			log.info("No transactions to submit to Audit System");
+			return;
+		}
+
 		List<Batch> batches = batchBuilder.buildBatches(transactions, maxAmountPerBatch);
 
+		// Audit submission object construction
 		Submission submission = new Submission();
 		submission.setBatches(batches);
 		log.info("Audit System Submission batch count = {}", submission.getBatches().size());
 
 		// Print Audit System Submission
 		log.info(JsonUtils.toJson(submission));
+		log.debug("submit:exit");
 	}
 
 }
