@@ -14,9 +14,63 @@ The solution is split into three components, each running in its own JVM or proc
 These components interact via REST APIs.
 Transactions flow from the Producer → Balance Tracker API → Audit submission process, while the UI queries the Balance Tracker API to display balances.
 
+
 ---
 
-## Balance Tracker API
+## 1. Transaction Producer
+
+### Tech Stack
+- Java 17  
+- Spring Boot  
+- Maven  
+- RestTemplate for REST communication  
+
+### Prerequisites
+- Java 17  
+- Maven 3.9+  
+
+### How it works
+The producer generates transactions on two dedicated threads: one for credits and one for debits. Each transaction has a unique transaction ID and an amount between £200 and £500,000. Debits are represented with negative amounts, credits with positive amounts.  
+The producer sends 25 credits and 25 debits per second (50 total) to the Balance Tracker API.
+
+### Key Endpoints
+- `POST /api/producer/v1/start` → Starts the producer threads.
+- `POST /api/producer/v1/stop` → Stops the producer threads.
+- `GET /api/producer/v1/status` → Returns `RUNNING` or `STOPPED`.
+
+### Configuration
+- **Base URL** of the Balance Tracker API is configurable in `application.yml` (`msa.balance-tracker-api.url` and `path`).  
+- **Retry mechanism** is built in for reliability. Transactions are retried on transient errors.  
+
+### Current Implementation
+- Transactions are generated continuously in memory using two dedicated threads — one for credits and one for debits.
+- Transactions are sent directly to the Balance Tracker API via REST.
+- Retry logic is supported with configurable attempts and delay to handle transient failures.
+- The producer exposes REST APIs to control its lifecycle.
+
+### Production Enhancements
+- Replace simple retry logic with exponential backoff or circuit breaker (Resilience4j).  
+- Failed transactions could be redirected to a dead-letter queue (Kafka/RabbitMQ) or DB for later reprocessing.  
+- Metrics and tracing could be added for observability.  
+
+### How to Run
+1. **Clone the repository**:
+```bash
+git clone https://github.com/thiruven7/bank-account-balance-tracker.git
+   cd bank-account-balance-tracker/transaction-producer
+```
+2. **Build the project**:
+```bash
+mvn clean install
+```
+3. **Run the application**:
+```bash
+mvn spring-boot:run
+```
+
+---
+
+## 2. Balance Tracker API
 
 ### Tech Stack
 - Java 17 
@@ -38,7 +92,8 @@ Once 1000 transactions have been accumulated, they are batched and submitted to 
 
 ### API Documentation
 - **Swagger UI:** [http://localhost:8091/swagger-ui.html](http://localhost:8091/swagger-ui.html)  
-- **OpenAPI spec JSON:** [http://localhost:8091/v3/api-docs](http://localhost:8091/v3/api-docs)  
+- **OpenAPI spec JSON:** [http://localhost:8091/v3/api-docs](http://localhost:8091/v3/api-docs) 
+- **OpenAPI spec document:** - `/docs/balance-tracker-api.yaml`
 
 ### Actuator Endpoints
 - Running on port **9091**  
@@ -58,10 +113,8 @@ Once 1000 transactions have been accumulated, they are batched and submitted to 
 ### How to Run
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/<your-username>/bank-account-balance-tracker.git
+git clone https://github.com/thiruven7/bank-account-balance-tracker.git
    cd bank-account-balance-tracker/balance-tracker-api
-mvn clean install
-mvn spring-boot:run
 ```
 2. **Build the project**:
 ```bash
