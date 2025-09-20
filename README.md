@@ -57,7 +57,7 @@ The producer sends 25 credits and 25 debits per second (50 total) to the Balance
 1. **Clone the repository**:
 ```bash
 git clone https://github.com/thiruven7/bank-account-balance-tracker.git
-   cd bank-account-balance-tracker/transaction-producer
+cd bank-account-balance-tracker/transaction-producer
 ```
 2. **Build the project**:
 ```bash
@@ -114,7 +114,7 @@ Once 1000 transactions have been accumulated, they are batched and submitted to 
 1. **Clone the repository**:
 ```bash
 git clone https://github.com/thiruven7/bank-account-balance-tracker.git
-   cd bank-account-balance-tracker/balance-tracker-api
+cd bank-account-balance-tracker/balance-tracker-api
 ```
 2. **Build the project**:
 ```bash
@@ -124,3 +124,38 @@ mvn clean install
 ```bash
 mvn spring-boot:run
 ```
+---
+
+## 3. Balance Tracker UI
+
+### Tech Stack
+- ReactJS  
+- Axios for API calls  
+- Bootstrap (or chosen CSS framework) for styling  
+
+### Prerequisites
+- Node.js 18+  
+- npm or yarn  
+
+### How it works
+The UI displays a **static Account ID label** and the **current balance**, which is dynamically retrieved from the Balance Tracker API. The balance is refreshed every 3 seconds to provide near real-time updates.  
+The UI runs as a standalone React application and calls the `GET /api/bankaccount/v1/balance` endpoint to fetch the latest balance.
+
+### Running the UI
+```bash
+git clone https://github.com/thiruven7/bank-account-balance-tracker.git
+cd balance-tracker-ui
+npm install
+npm start
+```
+Default dev server runs at [http://localhost:3000](http://localhost:3000).  
+
+### Current Implementation
+- Simple card-based UI with periodic balance refresh.  
+- No authentication.  
+
+### Production Enhancements
+- Implement robust error handling and retries for failed API calls.  
+- Secure API endpoints using JWT or OAuth2.  
+- Extend the UI to include transaction history and audit submission views.  
+- Containerize the application using Docker for consistent deployment across environments.  
