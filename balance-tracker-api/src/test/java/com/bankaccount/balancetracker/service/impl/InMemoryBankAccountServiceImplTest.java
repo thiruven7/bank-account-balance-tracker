@@ -21,13 +21,13 @@ import com.bankaccount.balancetracker.dto.Transaction;
 import com.bankaccount.balancetracker.service.AuditSubmissionService;
 
 /**
- * Test class to test BankAccountService implementation
+ * Test class to test BankAccountService implementation with in memory logic
  */
 @ExtendWith(MockitoExtension.class)
-class BankAccountServiceImplTest {
+class InMemoryBankAccountServiceImplTest {
 
 	@InjectMocks
-	private BankAccountServiceImpl bankAccountServiceImpl;
+	private InMemoryBankAccountServiceImpl bankAccountServiceImpl;
 
 	@Mock
 	private AuditSubmissionService auditSubmissionService;

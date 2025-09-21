@@ -1,86 +1,82 @@
+/**
+ * 
+ */
 package com.bankaccount.balancetracker.service.impl;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
+import java.time.LocalDateTime;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bankaccount.balancetracker.dto.Transaction;
-import com.bankaccount.balancetracker.service.AuditSubmissionService;
+import com.bankaccount.balancetracker.entity.BalanceT;
+import com.bankaccount.balancetracker.entity.TransactionT;
+import com.bankaccount.balancetracker.exception.BalanceTrackerException;
+import com.bankaccount.balancetracker.repository.BalanceRepository;
+import com.bankaccount.balancetracker.repository.TransactionRepository;
 import com.bankaccount.balancetracker.service.BankAccountService;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Service Implementation class for the bank account operations
+ * Service Implementation class for the bank account operations with DB
+ * persistence
  */
 @Service
+@Primary
+@Qualifier("dbService")
 @Slf4j
 public class BankAccountServiceImpl implements BankAccountService {
+	/**
+	 * Account ID is not required as per the requirement, internally assigned for
+	 * persistence and tractability, producer does not send it.
+	 */
+	private static final String ACCOUNT_ID = "ACC123456";
+	private final BalanceRepository balanceRepository;
+	private final TransactionRepository transactionRepository;
 
-	private final Queue<Transaction> transactionsQueue = new ConcurrentLinkedQueue<>();
-	private final AtomicReference<BigDecimal> balance = new AtomicReference<>(BigDecimal.ZERO);
-	private final Object lock = new Object();
-
-	@Value("${msa.auditsystem.transaction.limit}")
-	private int transactionLimit;
-
-	private final AuditSubmissionService auditSubmissionService;
-
-	public BankAccountServiceImpl(AuditSubmissionService auditSubmissionService) {
-		this.auditSubmissionService = auditSubmissionService;
+	public BankAccountServiceImpl(BalanceRepository balanceRepository, TransactionRepository transactionRepository) {
+		this.balanceRepository = balanceRepository;
+		this.transactionRepository = transactionRepository;
 	}
 
-	/**
-	 * Process Transaction
-	 */
 	@Override
+	@Transactional
 	public void processTransaction(Transaction transaction) {
-		log.debug("processTransaction:enter with transaction Id: {}", transaction.getTransactionId());
+		log.info("processTransaction:enter with transaction Id: {}", transaction.getTransactionId());
 
-		// Update Balance
-		var updatedBalance = balance.updateAndGet(bal -> bal.add(transaction.getAmount()));
-		log.debug("Updated balance after transaction Id {}: {}", transaction.getTransactionId(), updatedBalance);
+		// Read and update balance
+		BalanceT balance = balanceRepository.findForUpdate(ACCOUNT_ID).orElseGet(() -> {
+			// Initialize for the first time
+			BalanceT newBalance = BalanceT.builder().accountId(ACCOUNT_ID).amount(BigDecimal.ZERO).build();
+			balanceRepository.save(newBalance);
+			log.info("Initialized balance row for accountId: {}", ACCOUNT_ID);
+			return newBalance;
+		});
 
-		// Add transactions to the queue
-		transactionsQueue.add(transaction);
+		balance.setAmount(balance.getAmount().add(transaction.getAmount()));
+		log.debug("Updated balance after transaction Id {}: {}", transaction.getTransactionId(), balance.getAmount());
+		balanceRepository.save(balance);
 
-		// Check the Transaction limit and submit to Audit System
-		if (transactionsQueue.size() >= transactionLimit) {
-			// To ensure thread safe
-			synchronized (lock) {
-				if (transactionsQueue.size() >= transactionLimit) {
-					List<Transaction> submissionTransList = new ArrayList<>();
-					// Poll Transactions from the Queue
-					for (int i = 0; i < transactionLimit; i++) {
-						Optional.ofNullable(transactionsQueue.poll()).ifPresent(submissionTransList::add);
-					}
-					// Submit to Audit System with the transaction limit reached
-					if (!submissionTransList.isEmpty()) {
-						log.info("Transaction limit reached ({}). Triggering audit submission.", transactionLimit);
-						auditSubmissionService.submit(submissionTransList);
-					}
-				}
-			}
-
-		}
-		log.debug("processTransaction:exit");
-
+		// Persist Transaction in the Transactions table
+		TransactionT transactionEntity = TransactionT.builder().transactionId(transaction.getTransactionId())
+				.accountId(ACCOUNT_ID).amount(transaction.getAmount()).updateDateTime(LocalDateTime.now())
+				.auditStatus("PENDING").build();
+		transactionRepository.save(transactionEntity);
+		log.info("processTransaction:exit with transaction Id: {}", transaction.getTransactionId());
 	}
 
-	/**
-	 * Retrieve Balance
-	 */
 	@Override
 	public double retrieveBalance() {
-		log.debug("retrieveBalance:entry");
-		return balance.get().doubleValue();
+		log.info("retrieveBalance:entry ");
+		return balanceRepository.findById(ACCOUNT_ID).map(BalanceT::getAmount).map(Number::doubleValue)
+				.orElseThrow(() -> new BalanceTrackerException("Balance not found for account Id " + ACCOUNT_ID,
+						HttpStatus.NOT_FOUND));
+
 	}
 
 }

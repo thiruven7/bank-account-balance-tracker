@@ -22,18 +22,39 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
 	/**
-	 * Validation exception handler
+	 * MethodArgumentNotValidException exception handler
 	 * 
-	 * @param ex MethodArgumentNotValidException
-	 * @return 400 Bad Request
 	 */
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+	public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
 		Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
 				.collect(Collectors.toMap(e -> e.getField(), e -> e.getDefaultMessage()));
 		log.warn("Validation error: {}", errors);
 		ErrorResponse errorResp = ErrorResponse.builder().timestamp(LocalDateTime.now())
 				.status(HttpStatus.BAD_REQUEST.value()).message("Validation failed").errors(errors).build();
-		return ResponseEntity.badRequest().body(errorResp);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResp);
+	}
+
+	/**
+	 * Custom BalanceTrackerException handler
+	 * 
+	 */
+	@ExceptionHandler(BalanceTrackerException.class)
+	public ResponseEntity<ErrorResponse> handleBalanceTrackerException(BalanceTrackerException ex) {
+		log.warn("BalanceTrackerException: {}", ex.getMessage());
+		ErrorResponse errorResp = ErrorResponse.builder().timestamp(LocalDateTime.now()).status(ex.getStatus().value())
+				.message(ex.getMessage()).build();
+		return ResponseEntity.status(ex.getStatus()).body(errorResp);
+	}
+
+	/**
+	 * Generic Exception handler
+	 */
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+		log.warn("Unhandled Exception: {}", ex.getMessage(), ex);
+		ErrorResponse errorResp = ErrorResponse.builder().timestamp(LocalDateTime.now())
+				.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).message("Internal server error").build();
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResp);
 	}
 }

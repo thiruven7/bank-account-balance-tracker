@@ -2,6 +2,7 @@ package com.bankaccount.balancetracker.controller;
 
 import java.time.LocalDateTime;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +36,7 @@ public class BankAccountController {
 
 	private final BankAccountService bankAccountService;
 
-	public BankAccountController(BankAccountService bankAccountService) {
+	public BankAccountController(@Qualifier("dbService") BankAccountService bankAccountService) {
 		this.bankAccountService = bankAccountService;
 	}
 
