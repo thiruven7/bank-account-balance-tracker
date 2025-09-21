@@ -28,7 +28,7 @@ public class TransactionGeneratorService {
 	 * @return Transaction object
 	 */
 	public Transaction generateCredit() {
-		return new Transaction("CRE".concat(UUID.randomUUID().toString()), randomAmount(true));
+		return new Transaction("CRE-".concat(UUID.randomUUID().toString()), randomAmount(true));
 	}
 
 	/**
@@ -37,7 +37,7 @@ public class TransactionGeneratorService {
 	 * @return Transaction object
 	 */
 	public Transaction generateDebit() {
-		return new Transaction("DEB".concat(UUID.randomUUID().toString()), randomAmount(false));
+		return new Transaction("DEB-".concat(UUID.randomUUID().toString()), randomAmount(false));
 	}
 
 	/**
