@@ -7,3 +7,5 @@ msa:
     transaction:
       limit: 5 # Max Transaction Limit to submit to the Audit System - for testing.
       maxAmountPerBatch: 500 # Max absolute amount per batch in £ - for testing.
+    scheduler:
+      delay-ms: 15000 # in millisecnds

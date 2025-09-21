@@ -30,7 +30,7 @@ public class TransactionT {
 	private BigDecimal amount;
 
 	@Column(nullable = false)
-	private LocalDateTime updateDateTime;
+	private LocalDateTime updatedDateTime;
 
 	@Column(nullable = false)
 	private String auditStatus;

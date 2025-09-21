@@ -6,6 +6,8 @@ msa:
     transaction:
       limit: 1000 # Max Transaction Limit to submit to the Audit System.
       maxAmountPerBatch: 1000000 # Max absolute amount per batch in £.
+    scheduler:
+      delay-ms: 30000 # in millisecnds
 spring:
   application:
   name: balance-tracker-api

@@ -27,7 +27,7 @@ public class AuditSubmissionServiceImpl implements AuditSubmissionService {
 
 	private final AuditSystemBatchBuilder batchBuilder;
 
-	@Value("${msa.auditsystem.transaction.maxAmountPerBatch}")
+	@Value("${msa.auditsystem.transaction.maxAmountPerBatch:500}")
 	private BigDecimal maxAmountPerBatch;
 
 	public AuditSubmissionServiceImpl(AuditSystemBatchBuilder batchBuilder) {

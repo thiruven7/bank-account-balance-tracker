@@ -36,6 +36,8 @@ public class BankAccountServiceImpl implements BankAccountService {
 	 * persistence and tractability, producer does not send it.
 	 */
 	private static final String ACCOUNT_ID = "ACC123456";
+	private static final String PENDING = "PENDING";
+
 	private final BalanceRepository balanceRepository;
 	private final TransactionRepository transactionRepository;
 
@@ -64,8 +66,8 @@ public class BankAccountServiceImpl implements BankAccountService {
 
 		// Persist Transaction in the Transactions table
 		TransactionT transactionEntity = TransactionT.builder().transactionId(transaction.getTransactionId())
-				.accountId(ACCOUNT_ID).amount(transaction.getAmount()).updateDateTime(LocalDateTime.now())
-				.auditStatus("PENDING").build();
+				.accountId(ACCOUNT_ID).amount(transaction.getAmount()).updatedDateTime(LocalDateTime.now())
+				.auditStatus(PENDING).build();
 		transactionRepository.save(transactionEntity);
 		log.info("processTransaction:exit with transaction Id: {}", transaction.getTransactionId());
 	}
