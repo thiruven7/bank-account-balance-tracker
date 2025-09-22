@@ -30,9 +30,9 @@ class AuditSystemBatchBuilderTest {
 
 		// given
 		BigDecimal maxAmountPerBatch = new BigDecimal("500");
-		List<Transaction> transactions = List.of(new Transaction("CRE123", new BigDecimal("250")),
-				new Transaction("CRE124", new BigDecimal("250")), new Transaction("DEB125", new BigDecimal("-300")),
-				new Transaction("CRE126", new BigDecimal("200")), new Transaction("DEB127", new BigDecimal("-100.63")));
+		List<Transaction> transactions = List.of(new Transaction("CRE1235", new BigDecimal("250")),
+				new Transaction("CRE1245", new BigDecimal("250")), new Transaction("DEB1255", new BigDecimal("-300")),
+				new Transaction("CRE1265", new BigDecimal("200")), new Transaction("DEB1275", new BigDecimal("-100.63")));
 
 		// when
 		List<Batch> batches = auditSystemBatchBuilder.buildBatches(transactions, maxAmountPerBatch);

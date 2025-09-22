@@ -49,9 +49,9 @@ class AuditSubmissionServiceImplTest {
 	void testAuditSubmissionWithValidTrasnactionList() {
 
 		// given
-		List<Transaction> transactions = List.of(new Transaction("CRE123", new BigDecimal("250")),
-				new Transaction("CRE124", new BigDecimal("250")), new Transaction("DEB125", new BigDecimal("-300")),
-				new Transaction("CRE126", new BigDecimal("200")), new Transaction("DEB127", new BigDecimal("-100.63")));
+		List<Transaction> transactions = List.of(new Transaction("CRE1234", new BigDecimal("250")),
+				new Transaction("CRE1244", new BigDecimal("250")), new Transaction("DEB1254", new BigDecimal("-300")),
+				new Transaction("CRE1264", new BigDecimal("200")), new Transaction("DEB1274", new BigDecimal("-100.63")));
 
 		when(auditSystemBatchBuilder.buildBatches(anyList(), any()))
 				.thenReturn(List.of(new Batch(new BigDecimal("500"), 2), new Batch(new BigDecimal("500"), 2),
