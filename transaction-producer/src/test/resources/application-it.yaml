@@ -21,18 +21,6 @@ msa:
       min: 200 # Min amount per transaction in £
       max: 500000 # Max amount per transaction in £
 
-# Actuator Properties
-management:
-  server:
-    port: 9092
-  endpoints:
-    web:
-      exposure:
-        include: health, info, env, metrics, prometheus
-  endpoint:
-    health:
-      show-details: always
-
 #Logger properties
 logging:
   level:
