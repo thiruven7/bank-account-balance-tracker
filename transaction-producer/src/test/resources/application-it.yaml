@@ -15,8 +15,8 @@ msa:
       retry-count: 3 # No of time to retry
       retry-delay: 100 # in milliseconds
     rate:
-      credits-per-sec: 25 # Number of credit transactions
-      debits-per-sec: 25 # Number of debit transactions
+      credits-per-sec: 1 # Number of credit transactions for test
+      debits-per-sec: 1 # Number of debit transactions for test
     amount:
       min: 200 # Min amount per transaction in £
       max: 500000 # Max amount per transaction in £
