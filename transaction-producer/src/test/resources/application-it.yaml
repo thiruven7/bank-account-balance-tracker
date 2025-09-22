@@ -1,0 +1,28 @@
+server:
+  port: 8092
+  
+spring:
+  application:
+    name: transaction-producer
+
+msa:
+  balance-tracker-api:
+    url: http://localhost:8091
+    path: /api/bankaccount/v1/transactions
+  producer:
+    threadpoolcount: 2
+    client:
+      retry-count: 3 # No of time to retry
+      retry-delay: 100 # in milliseconds
+    rate:
+      credits-per-sec: 1 # Number of credit transactions for test
+      debits-per-sec: 1 # Number of debit transactions for test
+    amount:
+      min: 200 # Min amount per transaction in £
+      max: 500000 # Max amount per transaction in £
+
+#Logger properties
+logging:
+  level:
+    root: INFO # Set to INFO for PROD env.
+    com.bankaccount.balancetracker: DEBUG # Set to INFO for PROD env.

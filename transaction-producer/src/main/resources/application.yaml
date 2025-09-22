@@ -11,9 +11,30 @@ msa:
     path: /api/bankaccount/v1/transactions
   producer:
     threadpoolcount: 2
+    client:
+      retry-count: 3 # No of time to retry
+      retry-delay: 100 # in milliseconds
     rate:
       credits-per-sec: 25 # Number of credit transactions
       debits-per-sec: 25 # Number of debit transactions
     amount:
       min: 200 # Min amount per transaction in £
       max: 500000 # Max amount per transaction in £
+
+# Actuator Properties
+management:
+  server:
+    port: 9092
+  endpoints:
+    web:
+      exposure:
+        include: health, info, env, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
+
+#Logger properties
+logging:
+  level:
+    root: INFO # Set to INFO for PROD env.
+    com.bankaccount.balancetracker: DEBUG # Set to INFO for PROD env.

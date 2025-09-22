@@ -1,0 +1,109 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+  - url: http://localhost:8091
+    description: Generated server url
+tags:
+  - name: Bank Account API
+    description: APIs to manage bank account operations
+paths:
+  /api/bankaccount/v1/transactions:
+    post:
+      tags:
+        - Bank Account API
+      summary: Add Transaction
+      description: Adds credit and debit transaction to the bank account
+      operationId: addTransaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+        required: true
+      responses:
+        '201':
+          description: Transaction completed successfully
+        '400':
+          description: Invalid transaction input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/bankaccount/v1/balance:
+    get:
+      tags:
+        - Bank Account API
+      summary: Retrieve Balance
+      description: Retrieves account balance
+      operationId: getBalance
+      responses:
+        '200':
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    Transaction:
+      type: object
+      description: Represents a credit or debit transaction
+      properties:
+        transactionId:
+          type: string
+          description: Unique transaction ID
+          example: CRI-3fa85f64-5717-4562-b3fc-2c963f66afa6
+          minLength: 1
+        amount:
+          type: number
+          description: Transaction amount (positive for credit, negative for debit)
+          example: 150
+      required:
+        - amount
+        - transactionId
+    ErrorResponse:
+      type: object
+      description: Represents an error response with details
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the error
+          example: '2025-09-20T12:55:44.592'
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+        message:
+          type: string
+          description: Error message
+          example: Error message
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Field level validation errors
+    BalanceResponse:
+      type: object
+      description: Represents the current account balance
+      properties:
+        balance:
+          type: number
+          format: double
+          description: Current balance (positive or negative)
+          example: 1250.75

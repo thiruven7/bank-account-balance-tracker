@@ -1,12 +1,49 @@
 server:
   port: 8091
 
-spring:
-  application:
-    name: balance-tracker-api
-
 msa:
   auditsystem:
     transaction:
       limit: 1000 # Max Transaction Limit to submit to the Audit System.
       maxAmountPerBatch: 1000000 # Max absolute amount per batch in £.
+    scheduler:
+      delay-ms: 30000 # in millisecnds
+  bank:
+    transaction:
+      amount:
+        min: 200 # Min amount per transaction in £
+        max: 500000 # Min amount per transaction in £
+spring:
+  application:
+  name: balance-tracker-api
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: delta
+    password: springwater
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+# Actuator Properties
+management:
+  server:
+    port: 9091
+  endpoints:
+    web:
+      exposure:
+        include: health, info, env, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
+
+#Logger properties
+logging:
+  level:
+    root: INFO # Set to INFO for PROD env.
+    com.bankaccount.balancetracker: DEBUG # Set to INFO for PROD env.

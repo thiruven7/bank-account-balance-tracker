@@ -4,9 +4,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.bankaccount.transactionproducer.client.BalanceTrackerApiClient;
+import com.bankaccount.transactionproducer.exception.TransactionProducerException;
 import com.bankaccount.transactionproducer.task.ProducerTask;
 
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +46,9 @@ public class TransactionProducerService {
 	 */
 	public synchronized void startProducing() {
 
-		if (isRunning)
-			return;
+		if (isRunning) {
+			throw new TransactionProducerException("Producer is already running", HttpStatus.CONFLICT);
+		}
 
 		executorService = Executors.newFixedThreadPool(threadPoolCount);
 		// Credit Transactions Thread
@@ -63,12 +66,14 @@ public class TransactionProducerService {
 	 * Stop producing transactions
 	 */
 	public synchronized void shutdown() {
-		if (executorService != null) {
-			executorService.shutdownNow();
-			executorService = null;
-			isRunning = false;
-			log.info("Producer stopped");
+		if (!isRunning || executorService == null) {
+			throw new TransactionProducerException("Producer is not running", HttpStatus.NOT_FOUND);
 		}
+		executorService.shutdownNow();
+		executorService = null;
+		isRunning = false;
+		log.info("Producer stopped");
+
 	}
 
 	/**

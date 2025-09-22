@@ -28,7 +28,7 @@ public class TransactionGeneratorService {
 	 * @return Transaction object
 	 */
 	public Transaction generateCredit() {
-		return new Transaction("CRE".concat(UUID.randomUUID().toString()), randomAmount(true));
+		return new Transaction("CRE-".concat(UUID.randomUUID().toString()), randomAmount(true));
 	}
 
 	/**
@@ -37,7 +37,7 @@ public class TransactionGeneratorService {
 	 * @return Transaction object
 	 */
 	public Transaction generateDebit() {
-		return new Transaction("DEB".concat(UUID.randomUUID().toString()), randomAmount(false));
+		return new Transaction("DEB-".concat(UUID.randomUUID().toString()), randomAmount(false));
 	}
 
 	/**
@@ -47,6 +47,10 @@ public class TransactionGeneratorService {
 	 * @return amount
 	 */
 	private BigDecimal randomAmount(boolean isCredit) {
+		if (minAmount.compareTo(maxAmount) == 0) {
+			BigDecimal fixedValue = minAmount.setScale(2, RoundingMode.HALF_UP);
+			return isCredit ? fixedValue : fixedValue.negate();
+		}
 		double value = ThreadLocalRandom.current().nextDouble(minAmount.doubleValue(), maxAmount.doubleValue());
 		BigDecimal randomValue = BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);
 		return isCredit ? randomValue : randomValue.negate();

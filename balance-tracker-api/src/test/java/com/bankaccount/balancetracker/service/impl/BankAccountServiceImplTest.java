@@ -1,109 +1,80 @@
 package com.bankaccount.balancetracker.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.http.HttpStatus;
 
-import com.bankaccount.balancetracker.dto.Batch;
 import com.bankaccount.balancetracker.dto.Transaction;
-import com.bankaccount.balancetracker.service.helper.AuditSystemBatchBuilder;
+import com.bankaccount.balancetracker.entity.BalanceT;
+import com.bankaccount.balancetracker.exception.BalanceTrackerException;
+import com.bankaccount.balancetracker.repository.BalanceRepository;
+import com.bankaccount.balancetracker.repository.TransactionRepository;
 
 /**
- * Test class to test BankAccountServiceImpl class
+ * Test class to test BankAccountService implementation with DB integration.
  */
 @ExtendWith(MockitoExtension.class)
 class BankAccountServiceImplTest {
+
+	private static final String ACCOUNT_ID = "ACC123456";
 
 	@InjectMocks
 	private BankAccountServiceImpl bankAccountServiceImpl;
 
 	@Mock
-	private AuditSystemBatchBuilder batchBuilder;
+	private BalanceRepository balanceRepository;
 
-	@BeforeEach
-	void setup() {
-		ReflectionTestUtils.setField(bankAccountServiceImpl, "transactionLimit", 5);
-		ReflectionTestUtils.setField(bankAccountServiceImpl, "maxAmountPerBatch", new BigDecimal("500"));
-	}
+	@Mock
+	private TransactionRepository transactionRepository;
 
 	/**
-	 * Verifies balance and the audit submission is not triggered when the
-	 * transaction count is under the configured limit
+	 * Verifies balance and transaction persistance
 	 */
 	@Test
-	void testProcessTransactionAtBelowLimit() {
+	void testProcessTransactionWithExistingBalance() {
 
 		// given
 		Transaction trans = Transaction.builder().transactionId("CRE123").amount(new BigDecimal("250.52")).build();
 
-		// when
-		bankAccountServiceImpl.processTransaction(trans);
+		BalanceT balanceT = BalanceT.builder().accountId(ACCOUNT_ID).amount(new BigDecimal("10")).build();
 
-		// then
-		double balance = bankAccountServiceImpl.retrieveBalance();
-		assertEquals(250.52, balance, 0.001);
-		verify(batchBuilder, never()).buildBatches(anyList(), any());
-
-	}
-
-	/**
-	 * Verifies balance and the audit submission is not triggered when the
-	 * transaction count is under the configured limit for the debit transaction
-	 */
-	@Test
-	void testProcessTransactionWithDebitTransaction() {
-
-		// given
-		Transaction trans = Transaction.builder().transactionId("DEB123").amount(new BigDecimal("-250.52")).build();
+		when(balanceRepository.findForUpdate(ACCOUNT_ID)).thenReturn(Optional.of(balanceT));
 
 		// when
 		bankAccountServiceImpl.processTransaction(trans);
 
 		// then
-		double balance = bankAccountServiceImpl.retrieveBalance();
-		assertEquals(-250.52, balance, 0.001);
-		verify(batchBuilder, never()).buildBatches(anyList(), any());
-
+		verify(balanceRepository, times(1)).save(any());
+		verify(transactionRepository, times(1)).save(any());
 	}
 
-	/**
-	 * Verifies balance and the audit submission is triggered when the transaction
-	 * count is equal to the configured limit
-	 */
 	@Test
-	void testProcessTransactionAtMaxLimit() {
+	void testProcessTransactionWithNoBalance() {
 
 		// given
-		List<Transaction> transactions = List.of(new Transaction("CRE123", new BigDecimal("250")),
-				new Transaction("CRE124", new BigDecimal("250")), new Transaction("DEB125", new BigDecimal("-300")),
-				new Transaction("CRE126", new BigDecimal("200")), new Transaction("DEB127", new BigDecimal("-100.63")));
+		Transaction trans = Transaction.builder().transactionId("CRE123").amount(new BigDecimal("250.52")).build();
 
-		when(batchBuilder.buildBatches(anyList(), any())).thenReturn(List.of(new Batch(new BigDecimal("500"), 2),
-				new Batch(new BigDecimal("500"), 2), new Batch(new BigDecimal("100.63"), 1)));
+		when(balanceRepository.findForUpdate(ACCOUNT_ID)).thenReturn(Optional.empty());
+
 		// when
-		transactions.forEach(bankAccountServiceImpl::processTransaction);
+		bankAccountServiceImpl.processTransaction(trans);
 
 		// then
-		double balance = bankAccountServiceImpl.retrieveBalance();
-		assertEquals(299.37, balance, 0.001);
-		verify(batchBuilder, times(1)).buildBatches(anyList(), eq(new BigDecimal("500")));
-
+		verify(balanceRepository, times(2)).save(any());
+		verify(transactionRepository, times(1)).save(any());
 	}
 
 	/**
@@ -112,9 +83,26 @@ class BankAccountServiceImplTest {
 	@Test
 	void testRetrieveBalanceWithZeroBalance() {
 		// when
+		when(balanceRepository.findById(ACCOUNT_ID)).thenReturn(Optional.empty());
+		// then
+		BalanceTrackerException ex = assertThrows(BalanceTrackerException.class,
+				() -> bankAccountServiceImpl.retrieveBalance());
+		assertEquals("Balance not found for account Id ACC123456", ex.getMessage());
+		assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
+	}
+
+	/**
+	 * Verifies the retrieve balance when balance exist in the table
+	 */
+	@Test
+	void testRetrieveBalanceWithBalance() {
+		// given
+		BalanceT balanceT = BalanceT.builder().accountId(ACCOUNT_ID).amount(new BigDecimal("100")).build();
+		when(balanceRepository.findById(ACCOUNT_ID)).thenReturn(Optional.of(balanceT));
+		// when
 		double balance = bankAccountServiceImpl.retrieveBalance();
 		// then
-		assertEquals(0.0, balance, 0.001);
+		assertEquals(100.0, balance, 0.001);
 	}
 
 }
