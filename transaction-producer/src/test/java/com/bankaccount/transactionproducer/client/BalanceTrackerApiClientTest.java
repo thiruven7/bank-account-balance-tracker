@@ -18,8 +18,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.bankaccount.transactionproducer.dto.Transaction;
@@ -57,6 +60,66 @@ class BalanceTrackerApiClientTest {
 		// when
 		apiClient.sendTransaction(transaction);
 
+		// then
+		verify(restTemplate, times(1)).postForEntity(anyString(), eq(transaction), any());
+
+	}
+
+	/*
+	 * Verifies Send transaction to the Balance tracker API retry logic on Rest
+	 * client exception
+	 */
+	@Test
+	void testSendTransactionRetryOnRestClientException() {
+
+		// given
+		Transaction transaction = Transaction.builder().transactionId("DEB123").amount(BigDecimal.valueOf(100)).build();
+
+		when(restTemplate.postForEntity(anyString(), eq(transaction), any()))
+				.thenThrow(new RestClientException("Temporary failure"))
+				.thenThrow(new RestClientException("Temporary failure")).thenReturn(ResponseEntity.ok().build());
+		// when
+		apiClient.sendTransaction(transaction);
+
+		// then
+		verify(restTemplate, times(3)).postForEntity(anyString(), eq(transaction), any());
+
+	}
+
+	/*
+	 * Verifies Send transaction when retry count exhausted on Rest client exception
+	 */
+	@Test
+	void testRetryExhausted() {
+
+		// given
+		Transaction transaction = Transaction.builder().transactionId("DEB123").amount(BigDecimal.valueOf(100)).build();
+
+		when(restTemplate.postForEntity(anyString(), eq(transaction), any()))
+				.thenThrow(new RestClientException("Failure"));
+		// when
+		apiClient.sendTransaction(transaction);
+
+		// then
+		verify(restTemplate, times(3)).postForEntity(anyString(), eq(transaction), any());
+
+	}
+
+	/*
+	 * Verifies Send transaction on HttpClientErrorException
+	 */
+	@Test
+	void testNoRetryOnHttpClientError() {
+
+		// given
+		Transaction transaction = Transaction.builder().transactionId("DEB123").amount(BigDecimal.valueOf(100)).build();
+
+		when(restTemplate.postForEntity(anyString(), eq(transaction), any()))
+				.thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+		// when
+		apiClient.sendTransaction(transaction);
+
+		// then
 		verify(restTemplate, times(1)).postForEntity(anyString(), eq(transaction), any());
 
 	}

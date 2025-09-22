@@ -47,6 +47,10 @@ public class TransactionGeneratorService {
 	 * @return amount
 	 */
 	private BigDecimal randomAmount(boolean isCredit) {
+		if (minAmount.compareTo(maxAmount) == 0) {
+			BigDecimal fixedValue = minAmount.setScale(2, RoundingMode.HALF_UP);
+			return isCredit ? fixedValue : fixedValue.negate();
+		}
 		double value = ThreadLocalRandom.current().nextDouble(minAmount.doubleValue(), maxAmount.doubleValue());
 		BigDecimal randomValue = BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);
 		return isCredit ? randomValue : randomValue.negate();
