@@ -50,6 +50,7 @@ class GlobalExceptionHandlerTest {
 
 		// then
 		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertNotNull(response.getBody());
 		assertEquals(400, response.getBody().getStatus());
 		assertEquals("Validation failed", response.getBody().getMessage());
 		assertNotNull(response.getBody().getTimestamp());
@@ -72,6 +73,7 @@ class GlobalExceptionHandlerTest {
 
 		// then
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+		assertNotNull(response.getBody());
 		assertEquals(404, response.getBody().getStatus());
 		assertEquals("Balance not found for account Id ACC123456", response.getBody().getMessage());
 		assertNotNull(response.getBody().getTimestamp());
@@ -90,6 +92,7 @@ class GlobalExceptionHandlerTest {
 
 		// then
 		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+		assertNotNull(response.getBody());
 		assertEquals(500, response.getBody().getStatus());
 		assertEquals("Internal server error", response.getBody().getMessage());
 		assertNotNull(response.getBody().getTimestamp());
