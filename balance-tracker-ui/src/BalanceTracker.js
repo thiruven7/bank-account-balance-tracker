@@ -24,7 +24,7 @@ function BalanceTracker() {
             <div className="card shadow-sm">
                 <div className="card-body">
                     <h2 className="card-title text-primary">Bank Account Summary</h2>
-                    <p><strong>Bank Account Number:</strong>ABC123456</p>
+                    <p><strong>Bank Account Number:</strong>ACC123456</p>
                     {error ? (<p className="text-danger">Error: {error}</p>)
                         : (<p><strong>Balance:</strong> £{balance}</p>)}
                 </div>
