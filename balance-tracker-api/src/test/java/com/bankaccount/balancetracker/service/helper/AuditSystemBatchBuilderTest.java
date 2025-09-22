@@ -32,7 +32,8 @@ class AuditSystemBatchBuilderTest {
 		BigDecimal maxAmountPerBatch = new BigDecimal("500");
 		List<Transaction> transactions = List.of(new Transaction("CRE1235", new BigDecimal("250")),
 				new Transaction("CRE1245", new BigDecimal("250")), new Transaction("DEB1255", new BigDecimal("-300")),
-				new Transaction("CRE1265", new BigDecimal("200")), new Transaction("DEB1275", new BigDecimal("-100.63")));
+				new Transaction("CRE1265", new BigDecimal("200")),
+				new Transaction("DEB1275", new BigDecimal("-100.63")));
 
 		// when
 		List<Batch> batches = auditSystemBatchBuilder.buildBatches(transactions, maxAmountPerBatch);
@@ -80,6 +81,25 @@ class AuditSystemBatchBuilderTest {
 
 		// then
 		assertEquals(0, batches.size());
+	}
+
+	/**
+	 * Verifies the build batches method considering credit and debit as absolute
+	 * values
+	 */
+	@Test
+	void testCreditsAndDebitsAreSummedAsAbsolute() {
+		// given
+		BigDecimal maxAmountPerBatch = new BigDecimal("500");
+		List<Transaction> transactions = List.of(new Transaction("CRE12356", new BigDecimal("250")),
+				new Transaction("DEB12756", new BigDecimal("-250")));
+
+		// when
+		List<Batch> batches = auditSystemBatchBuilder.buildBatches(transactions, maxAmountPerBatch);
+
+		// then
+		assertEquals(1, batches.size());
+		assertEquals(new BigDecimal("500"), batches.get(0).getTotalValueOfAllTransactions());
 	}
 
 }

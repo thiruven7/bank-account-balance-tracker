@@ -164,8 +164,9 @@ class BalanceTrackerApi_IT {
 	void testRetrieveBalanceAfterCreditAndDebitTransactions() {
 
 		// given
-		Transaction creditTx = Transaction.builder().transactionId("CRE12314").amount(new BigDecimal("250.52")).build();
-		Transaction debitTx = Transaction.builder().transactionId("DEB23414").amount(new BigDecimal("-50.52")).build();
+		Transaction creditTx = Transaction.builder().transactionId("CRE12314").amount(new BigDecimal("2500.52"))
+				.build();
+		Transaction debitTx = Transaction.builder().transactionId("DEB23414").amount(new BigDecimal("-500.52")).build();
 
 		testRestTemplate.postForEntity("/api/bankaccount/v1/transactions", creditTx, Void.class);
 		testRestTemplate.postForEntity("/api/bankaccount/v1/transactions", debitTx, Void.class);
@@ -178,14 +179,14 @@ class BalanceTrackerApi_IT {
 		assertNotNull(response);
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals(200.0, response.getBody().getBalance());
+		assertEquals(2000.0, response.getBody().getBalance());
 
 		Optional<TransactionT> transactionT = transactionRepository.findById("CRE12314");
 		assertTrue(transactionT.isPresent());
 		TransactionT transEntity = transactionT.get();
 		assertEquals("CRE12314", transEntity.getTransactionId());
 		assertNotNull(transEntity.getAccountId());
-		assertEquals(new BigDecimal("250.52"), transEntity.getAmount());
+		assertEquals(new BigDecimal("2500.52"), transEntity.getAmount());
 		assertNotNull(transEntity.getUpdatedDateTime());
 		assertEquals("PENDING", transEntity.getAuditStatus());
 
@@ -194,15 +195,74 @@ class BalanceTrackerApi_IT {
 		TransactionT transactionEntity = transT.get();
 		assertEquals("DEB23414", transactionEntity.getTransactionId());
 		assertNotNull(transactionEntity.getAccountId());
-		assertEquals(new BigDecimal("-50.52"), transactionEntity.getAmount());
+		assertEquals(new BigDecimal("-500.52"), transactionEntity.getAmount());
 		assertNotNull(transEntity.getUpdatedDateTime());
 		assertEquals("PENDING", transactionEntity.getAuditStatus());
 
 		Optional<BalanceT> balanceT = balanceRepository.findById(transEntity.getAccountId());
 		assertTrue(balanceT.isPresent());
 		BalanceT balanceEntity = balanceT.get();
-		assertEquals(new BigDecimal("200.00"), balanceEntity.getAmount());
+		assertEquals(new BigDecimal("2000.00"), balanceEntity.getAmount());
 
+	}
+
+	/**
+	 * Verifies the method throws bad request when the amount is not in the
+	 * configured range
+	 */
+	@Test
+	void testProcessTransactionWithAmountOutOfRange() {
+		// given
+
+		Transaction trans = Transaction.builder().transactionId("CRE-99999").amount(new BigDecimal("100.99")).build();
+
+		// when
+		ResponseEntity<ErrorResponse> response = testRestTemplate.postForEntity("/api/bankaccount/v1/transactions",
+				trans, ErrorResponse.class);
+
+		// then
+		assertNotNull(response);
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertTrue(response.getBody().getMessage().startsWith("Amount must be between"));
+	}
+
+	/**
+	 * Verifies the method throws bad request when the credit amount is negative
+	 */
+	@Test
+	void testProcessCreditTransactionWithNegativeAmount() {
+
+		// given
+		// redit must be positive value
+		Transaction trans = Transaction.builder().transactionId("CRE-88888").amount(new BigDecimal("-250.00")).build();
+
+		// when
+		ResponseEntity<ErrorResponse> response = testRestTemplate.postForEntity("/api/bankaccount/v1/transactions",
+				trans, ErrorResponse.class);
+
+		// then
+		assertNotNull(response);
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals("Credit must have positive amount", response.getBody().getMessage());
+	}
+
+	/**
+	 * Verifies the method throws bad request when the dedit amount is negative
+	 */
+	@Test
+	void testProcessDebitTransactionWithPositiveAmount() {
+		// given
+		// debit must be negative value
+		Transaction trans = Transaction.builder().transactionId("DEB-77777").amount(new BigDecimal("250.00")).build();
+
+		// when
+		ResponseEntity<ErrorResponse> response = testRestTemplate.postForEntity("/api/bankaccount/v1/transactions",
+				trans, ErrorResponse.class);
+
+		// then
+		assertNotNull(response);
+		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+		assertEquals("Debit must have negative amount", response.getBody().getMessage());
 	}
 
 }
