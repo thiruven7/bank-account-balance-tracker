@@ -1,0 +1,103 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+  - url: http://localhost:8092
+    description: Generated server url
+tags:
+  - name: Transaction Producer API
+    description: Endpoints to control the lifecycle of the transaction producer
+paths:
+  /api/producer/v1/stop:
+    post:
+      tags:
+        - Transaction Producer API
+      summary: Stop Transaction Producer
+      description: Terminates the transaction producer if it is currently running.
+      operationId: stop
+      responses:
+        '200':
+          description: Producer stopped
+          content:
+            '*/*':
+              schema:
+                type: string
+        '404':
+          description: Producer is not running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/producer/v1/start:
+    post:
+      tags:
+        - Transaction Producer API
+      summary: Start Transaction Producer
+      description: Initiates the transaction producer. It begins generating credit and debit transactions at the configured rate and sends them to the Balance Tracker API.
+      operationId: start
+      responses:
+        '200':
+          description: Producer started
+          content:
+            '*/*':
+              schema:
+                type: string
+        '409':
+          description: Producer is already running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/producer/v1/status:
+    get:
+      tags:
+        - Transaction Producer API
+      summary: Check Producer Status
+      description: 'Returns the current status of the transaction producer: RUNNING or STOPPED.'
+      operationId: status
+      responses:
+        '200':
+          description: Producer status RUNNING/STOPPED
+          content:
+            '*/*':
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Represents an error response with details
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the error
+          example: '2025-09-20T12:55:44.592'
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+        message:
+          type: string
+          description: Error message
+          example: Error message

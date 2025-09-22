@@ -14,6 +14,7 @@ import com.bankaccount.balancetracker.dto.Submission;
 import com.bankaccount.balancetracker.dto.Transaction;
 import com.bankaccount.balancetracker.service.AuditSubmissionService;
 import com.bankaccount.balancetracker.service.helper.AuditSystemBatchBuilder;
+import com.bankaccount.balancetracker.service.util.AuditLogWriter;
 import com.bankaccount.balancetracker.service.util.JsonUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +59,9 @@ public class AuditSubmissionServiceImpl implements AuditSubmissionService {
 
 		// Print Audit System Submission
 		log.info(JsonUtils.toJson(submission));
+
+		// Write Audit Submission to file - for demo purpose
+		AuditLogWriter.writeSubmissionLog(submission);
 		log.debug("submit:exit");
 	}
 

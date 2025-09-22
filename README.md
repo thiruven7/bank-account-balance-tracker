@@ -7,7 +7,7 @@ Application to process credit and debit transactions, track account balances, an
 
 The solution is split into three components, each running in its own JVM or process:
 
-1. **Transaction Producer** – generates random debit and credit transactions and sends them to the Balance Tracker API.  
+1. **Transaction Producer** – generates random credit and debit transactions and sends them to the Balance Tracker API.  
 2. **Balance Tracker API** – processes incoming transactions, updates the balance, and batches transactions for submission to the audit system.  
 3. **Balance Tracker UI** – a React-based user interface that displays the account balance and periodically refreshes it.  
 
@@ -22,8 +22,11 @@ Transactions flow from the Producer → Balance Tracker API → Audit submission
 ### Tech Stack
 - Java 17  
 - Spring Boot  
-- Maven  
-- RestTemplate for REST communication  
+- Maven
+- Springdoc OpenAPI (Swagger)
+- Spring Actuator (health, metrics)
+- RestTemplate for REST communication
+- SLF4J with file-based logging for audit traceability  
 
 ### Prerequisites
 - Java 17  
@@ -38,20 +41,88 @@ The producer sends 25 credits and 25 debits per second (50 total) to the Balance
 - `POST /api/producer/v1/stop` → Stops the producer threads.
 - `GET /api/producer/v1/status` → Returns `RUNNING` or `STOPPED`.
 
+### API Documentation
+- **Swagger UI:** [http://localhost:8092/swagger-ui.html](http://localhost:8092/swagger-ui.html)  
+- **OpenAPI spec JSON:** [http://localhost:8092/v3/api-docs](http://localhost:8092/v3/api-docs) 
+- **OpenAPI spec document:** - `/docs/transaction-producer.yml`
+
+### Actuator Endpoints
+- Running on port **9092**  
+- Health URL: [http://localhost:9092/actuator/health](http://localhost:9092/actuator/health)   
+
 ### Configuration
-- **Base URL** of the Balance Tracker API is configurable in `application.yml` (`msa.balance-tracker-api.url` and `path`).  
-- **Retry mechanism** is built in for reliability. Transactions are retried on transient errors.  
+```yaml
+server:
+  port: 8092
+  
+spring:
+  application:
+    name: transaction-producer
+
+msa:
+  balance-tracker-api:
+    url: http://localhost:8091
+    path: /api/bankaccount/v1/transactions
+  producer:
+    threadpoolcount: 2
+    client:
+      retry-count: 3 # No of time to retry
+      retry-delay: 100 # in milliseconds
+    rate:
+      credits-per-sec: 25 # Number of credit transactions
+      debits-per-sec: 25 # Number of debit transactions
+    amount:
+      min: 200 # Min amount per transaction in £
+      max: 500000 # Max amount per transaction in £
+
+# Actuator Properties
+management:
+  server:
+    port: 9092
+  endpoints:
+    web:
+      exposure:
+        include: health, info, env, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
+
+#Logger properties
+logging:
+  level:
+    root: INFO # Set to INFO for PROD env.
+    com.bankaccount.balancetracker: DEBUG # Set to INFO for PROD env.
+```
+- **Base URL:** Configurable in `application.yml` (`msa.balance-tracker-api.url` and `msa.balance-tracker-api.path`) 
+- **Transaction rate:** 25 credits/sec + 25 debits/sec  
+- **Amount range:** £200 to £500,000  
+- **Retry logic:** 3 attempts with 100ms delay  
+- - **Logging:** DEBUG for local traceability; INFO recommended for production.  
+- **Actuator:** exposed on port **9092** for health and metrics 
 
 ### Current Implementation
-- Transactions are generated continuously in memory using two dedicated threads — one for credits and one for debits.
-- Transactions are sent directly to the Balance Tracker API via REST.
-- Retry logic is supported with configurable attempts and delay to handle transient failures.
-- The producer exposes REST APIs to control its lifecycle.
+
+- Runs as a separate JVM from the Balance Tracker API  
+- Spring Boot microservice
+- Uses two dedicated threads to continuously generate transactions:  
+  - One thread for credits (positive amounts)  
+  - One thread for debits (negative amounts)  
+- Each transaction includes:  
+  - A randomly generated ID (prefixed with CRE or DEB)  
+  - A random amount within the configured range  
+- Transactions are sent via REST to the Balance Tracker API  
+- Retry logic handles transient failures with configurable delay  
+- REST endpoints allow lifecycle control (`/start`, `/stop`, `/status`) 
+- JUnit with Mockito extension test cases 
+- Swagger UI and OpenAPI spec available for all exposed endpoints  
+- Actuator endpoints provide health, metrics, and Prometheus integration  
 
 ### Production Enhancements
-- Replace simple retry logic with exponential backoff or circuit breaker (Resilience4j).  
-- Failed transactions could be redirected to a dead-letter queue (Kafka/RabbitMQ) or DB for later reprocessing.  
-- Metrics and tracing could be added for observability.  
+
+- Replace retry logic with **Resilience4j** (exponential backoff, circuit breaker)  
+- Redirect failed transactions to **Kafka/RabbitMQ** or a **DB** for reprocessing  
+- Add **Prometheus metrics** for transaction rate, retry count, and batch size    
+- Include **OAuth2/JWT authentication and authorization** for REST APIs to control access
 
 ### How to Run
 1. **Clone the repository**:
@@ -76,7 +147,10 @@ mvn spring-boot:run
 - Java 17 
 - Spring Boot  
 - Maven 
-- Springdoc OpenAPI for Swagger documentation  
+- Springdoc OpenAPI for Swagger documentation 
+- Spring Actuator for health and metrics
+- H2 Database (for integration testing and local persistence)
+- SLF4J with file-based logging for audit traceability
 
 ### Prerequisites
 - Java 17  
@@ -99,16 +173,96 @@ Once 1000 transactions have been accumulated, they are batched and submitted to 
 - Running on port **9091**  
 - Health URL: [http://localhost:9091/actuator/health](http://localhost:9091/actuator/health)  
 
+### Configuration
+```yaml
+server:
+  port: 8091
+
+msa:
+  auditsystem:
+    transaction:
+      limit: 1000 # Max Transaction Limit to submit to the Audit System.
+      maxAmountPerBatch: 1000000 # Max absolute amount per batch in £.
+    scheduler:
+      delay-ms: 30000 # in millisecnds
+  bank:
+    transaction:
+      amount:
+        min: 200 # Min amount per transaction in £
+        max: 500000 # Min amount per transaction in £
+spring:
+  application:
+  name: balance-tracker-api
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: delta
+    password: springwater
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+# Actuator Properties
+management:
+  server:
+    port: 9091
+  endpoints:
+    web:
+      exposure:
+        include: health, info, env, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
+
+#Logger properties
+logging:
+  level:
+    root: INFO # Set to INFO for PROD env.
+    com.bankaccount.balancetracker: DEBUG # Set to INFO for PROD env.
+
+```
+- **Audit trigger:** Fires every 30 seconds or when 1000 transactions are accumulated.  
+- **Batching logic:** Ensures no batch exceeds £1,000,000 in absolute value.  
+- **Transaction validation:** Amount range enforced between £200 and £500,000.  
+- **Persistence:** Uses H2 in-memory DB for local testing; replace with PostgreSQL for production.  
+- **Actuator:** Exposed on port **9091** for health, metrics, and Prometheus integration.  
+- **H2 Console:** Available at `/h2-console` for inspection during development.  
+- **Logging:** DEBUG for local traceability; INFO recommended for production.
+
 ### Current Implementation
-- Balance and transactions are stored in memory using `ConcurrentLinkedQueue` and `AtomicReference`.  
-- Submissions to the audit system are simulated by logging the batch details to the console.  
+- The API exposes endpoints to submit transactions and retrieve the current account balance.  
+- Transactions are persisted to an H2 database using Spring Data JPA in a dedicated `TransactionT` entity.  
+- The current balance is derived from persisted transactions and stored in a dedicated `BalanceT` entity.  
+- Applied **pessimistic locking** to prevent lost updates under concurrent transaction load.
+- Once 1000 transactions are accumulated, they are batched and submitted to the audit system.  
+- Batches are created such that:
+  - No batch exceeds a total absolute value of £1,000,000  
+  - The number of batches is minimized using a FFD bin-packing strategy  
+- Audit submissions are logged to timestamped JSON files under `resources/audit-logs` for traceability.
+- Integration tests use H2 to validate persistence, batching, and audit logic.
+- JUnit with Mockito extension test cases
+- Swagger UI and OpenAPI spec available for all exposed endpoints  
+- Actuator endpoints provide health, metrics, and Prometheus integration
+
+## Prototype Implementation
+- In-memory storage using `ConcurrentLinkedQueue` and `AtomicReference`  
+- Suitable for prototyping or stateless deployments  
+- Not recommended for production due to lack of durability
 
 ### Production Enhancements
-- Replace in-memory storage with a persistent database (i.e PostgreSQL) for durability.
-- Consider using Kafka or message queues to decouple transaction processing from audit submission or any downstream systems. 
-- Implement a scheduler or consumer to flush incomplete batches periodically (to prevent data loss on system restart).  
-- Add security (JWT/OAuth2) for API endpoints.  
-- Scale horizontally by running multiple API instances with shared DB or Kafka.
+- **Replace in-memory H2 DB** with PostgreSQL or another persistent database for durability.  
+- **Pessimistic locking:** `SELECT ... FOR UPDATE SET LOCK` to prevent lost updates under concurrent load.  
+- **Decouple batching logic:** use Spring Boot Batch or a scheduler to flush incomplete batches.  
+- **Decouple transaction processing:** use Kafka or RabbitMQ for real-time downstream consumption.  
+- **Separate audit tracking table** for balance update history.  
+- **Security:** add JWT/OAuth2 for API endpoints.  
+- **Horizontal scaling:** run multiple API instances with shared DB or message queue coordination.  
+- **Observability:** integrate Prometheus and OpenTelemetry for metrics and tracing.
 
 ### How to Run
 1. **Clone the repository**:
