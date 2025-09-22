@@ -29,7 +29,7 @@ import com.bankaccount.balancetracker.repository.BalanceRepository;
 import com.bankaccount.balancetracker.repository.TransactionRepository;
 
 /**
- * Integration test for Balance Tracker API
+ * Integration test for Balance Tracker API with H2 DB integration
  */
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
