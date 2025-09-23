@@ -122,7 +122,7 @@ logging:
 - Transactions are sent via REST to the Balance Tracker API  
 - Retry logic handles transient failures with configurable delay  
 - REST endpoints allow lifecycle control (`/start`, `/stop`, `/status`) 
-- JUnit with Mockito extension test cases 
+- JUnit tests with Mockito extensions
 - Swagger UI and OpenAPI spec available for all exposed endpoints  
 - Actuator endpoints provide health, metrics, and Prometheus integration  
 
@@ -131,7 +131,7 @@ logging:
 - Replace retry logic with **Resilience4j** (exponential backoff, circuit breaker)  
 - Redirect failed transactions to **Kafka/RabbitMQ** or a **DB** for reprocessing  
 - Add **Prometheus metrics** for transaction rate, retry count, and batch size    
-- Include **OAuth2/JWT authentication and authorization** for REST APIs to control access
+- Include **OAuth2/JWT authentication and authorisation** for REST APIs to control access
 
 ### How to Run
 1. **Clone the repository**:
@@ -208,7 +208,7 @@ msa:
       limit: 1000 # Max Transaction Limit to submit to the Audit System.
       maxAmountPerBatch: 1000000 # Max absolute amount per batch in £.
     scheduler:
-      delay-ms: 30000 # in millisecnds
+      delay-ms: 30000 # in milliseconds
   bank:
     transaction:
       amount:
@@ -250,7 +250,7 @@ logging:
     com.bankaccount.balancetracker: DEBUG # Set to INFO for PROD env.
 
 ```
-- **Audit trigger:** Fires every 30 seconds or when 1000 transactions are accumulated.  
+- **Audit trigger:** Runs every 30 seconds. If 1000 pending transactions are found, they are batched and submitted; otherwise, the submission is skipped until the next run. 
 - **Batching logic:** Ensures no batch exceeds £1,000,000 in absolute value.  
 - **Transaction validation:** Amount range enforced between £200 and £500,000.  
 - **Persistence:** Uses H2 in-memory DB for local testing; replace with PostgreSQL for production.  
@@ -263,13 +263,13 @@ logging:
 - Transactions are persisted to an H2 database using Spring Data JPA in a dedicated `TransactionT` entity.  
 - The current balance is derived from persisted transactions and stored in a dedicated `BalanceT` entity.  
 - Applied **pessimistic locking** to prevent lost updates under concurrent transaction load.
-- Once 1000 transactions are accumulated, they are batched and submitted to the audit system.  
+- Audit trigger: Runs every 30 seconds. If 1000 pending transactions are found, they are batched and submitted; otherwise, the submission is skipped until the next run.
 - Batches are created such that:
   - No batch exceeds a total absolute value of £1,000,000  
   - The number of batches is minimized using a FFD bin-packing strategy  
-- Audit submissions are logged to timestamped JSON files under `resources/audit-logs` for traceability.
+- Audit submissions are logged in the console and also logged to timestamped JSON files under `resources/audit-logs` for demo.
 - Integration tests use H2 to validate persistence, batching, and audit logic.
-- JUnit with Mockito extension test cases
+- JUnit tests Mockito extensions
 - Swagger UI and OpenAPI spec available for all exposed endpoints  
 - Actuator endpoints provide health, metrics, and Prometheus integration
 
@@ -313,7 +313,7 @@ mvn spring-boot:run
 
 ### Prerequisites
 - Node.js 18+  
-- npm or yarn  
+- npm  
 
 ### How it works
 The UI displays a **static Account ID label** and the **current balance**, which is dynamically retrieved from the Balance Tracker API. The balance is refreshed every 3 seconds to provide near real-time updates.  
