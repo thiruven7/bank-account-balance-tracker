@@ -342,13 +342,13 @@ Default dev server runs at [http://localhost:3000](http://localhost:3000).
 
 ## UI & DB Preview
 
-**Balance Tracker UI Screentshot:** [balance-tracker-ui.jpeg](docs/results/balance-tracker-ui.jpeg)
+**Balance Tracker UI Screenshot:** [balance-tracker-ui.jpeg](docs/results/balance-tracker-ui.jpeg)
 
-**Balance Table Screentshot:** [balance-table.jpeg](docs/results/balance-table.jpeg)
+**Balance Table Screenshot:** [balance-table.jpeg](docs/results/balance-table.jpeg)
 
-**Transactions Table Screentshot:** [transactions-table.jpeg](docs/results/transactions-table.jpeg)
+**Transactions Table Screenshot:** [transactions-table.jpeg](docs/results/transactions-table.jpeg)
 
-**Balance Tracker UI Screentshot:** [balance-tracker-ui.jpeg](docs/results/balance-tracker-ui.jpeg)
+**Balance Tracker UI Screenshot:** [balance-tracker-ui.jpeg](docs/results/balance-tracker-ui.jpeg)
 
 **Transaction table Sum Amount Screenshot:** [transactions-sum-amount.jpeg](docs/results/transactions-sum-amount.jpeg)
 
