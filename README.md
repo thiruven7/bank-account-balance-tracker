@@ -50,6 +50,15 @@ The producer sends 25 credits and 25 debits per second (50 total) to the Balance
 - Running on port **9092**  
 - Health URL: [http://localhost:9092/actuator/health](http://localhost:9092/actuator/health)   
 
+### Dependencies Used
+
+- `spring-boot-starter-web` – REST API development  
+- `spring-boot-starter-actuator` – Health checks and metrics  
+- `spring-boot-devtools` – Hot reload for development  
+- `spring-boot-starter-test` – Unit and integration testing  
+- `springdoc-openapi-starter-webmvc-ui` – Swagger documentation  
+- `org.projectlombok:lombok` – Reduces boilerplate code (e.g. getters, setters, constructors)  
+
 ### Configuration
 ```yaml
 server:
@@ -167,11 +176,26 @@ Once 1000 transactions have been accumulated, they are batched and submitted to 
 ### API Documentation
 - **Swagger UI:** [http://localhost:8091/swagger-ui.html](http://localhost:8091/swagger-ui.html)  
 - **OpenAPI spec JSON:** [http://localhost:8091/v3/api-docs](http://localhost:8091/v3/api-docs) 
-- **OpenAPI spec document:** - `/docs/balance-tracker-api.yaml`
+- **OpenAPI spec document:** [balance-tracker-api.yaml](docs/balance-tracker-api.yaml)
 
 ### Actuator Endpoints
 - Running on port **9091**  
-- Health URL: [http://localhost:9091/actuator/health](http://localhost:9091/actuator/health)  
+- Health URL: [http://localhost:9091/actuator/health](http://localhost:9091/actuator/health) 
+
+
+### 📦 Dependencies Used
+
+- `spring-boot-starter-web` – Core REST API development  
+- `spring-boot-starter-actuator` – Health checks, metrics, and Prometheus integration  
+- `spring-boot-starter-data-jpa` – ORM and database persistence using JPA  
+- `spring-boot-starter-validation` – Bean validation for request payloads  
+- `spring-boot-devtools` – Hot reload and development-time enhancements  
+- `spring-boot-starter-test` – Unit and integration testing support  
+- `springdoc-openapi-starter-webmvc-ui` – Swagger UI and OpenAPI documentation  
+- `com.h2database:h2` – In-memory database for local testing and prototyping  
+- `org.projectlombok:lombok` – Reduces boilerplate code (e.g. getters, setters, constructors)  
+- `com.fasterxml.jackson.core:jackson-databind` – JSON serialization and deserialization  
+
 
 ### Configuration
 ```yaml
@@ -233,7 +257,7 @@ logging:
 - **Actuator:** Exposed on port **9091** for health, metrics, and Prometheus integration.  
 - **H2 Console:** Available at `/h2-console` for inspection during development.  
 - **Logging:** DEBUG for local traceability; INFO recommended for production.
-
+---
 ### Current Implementation
 - The API exposes endpoints to submit transactions and retrieve the current account balance.  
 - Transactions are persisted to an H2 database using Spring Data JPA in a dedicated `TransactionT` entity.  
@@ -313,3 +337,19 @@ Default dev server runs at [http://localhost:3000](http://localhost:3000).
 - Secure API endpoints using JWT or OAuth2.  
 - Extend the UI to include transaction history and audit submission views.  
 - Containerize the application using Docker for consistent deployment across environments.  
+
+---
+
+## UI & DB Preview
+
+**Balance Tracker UI Screentshot:** [balance-tracker-ui.jpeg](docs/results/balance-tracker-ui.jpeg)
+
+**Balance Table Screentshot:** [balance-table.jpeg](docs/results/balance-table.jpeg)
+
+**Transactions Table Screentshot:** [transactions-table.jpeg](docs/results/transactions-table.jpeg)
+
+**Balance Tracker UI Screentshot:** [balance-tracker-ui.jpeg](docs/results/balance-tracker-ui.jpeg)
+
+**Transaction table Sum Amount Screenshot:** [transactions-sum-amount.jpeg](docs/results/transactions-sum-amount.jpeg)
+
+**Audit Submissiont Sample:** [audit_submission_20250922_205110.json](docs/results/audit_submission_20250922_205110.json)
